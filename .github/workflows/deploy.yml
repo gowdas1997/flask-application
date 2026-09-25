@@ -1,0 +1,41 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  build-and-deploy:
+    if: github.event_name == 'push' || (github.event.pull_request.merged == true)
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set namespace based on branch
+        id: vars
+        run: |
+          if [ "${{ github.ref_name }}" == "dev" ]; then
+            echo "namespace=dev" >> $GITHUB_OUTPUT
+          else
+            echo "namespace=prod" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        run: |
+          docker build -t gowdas1997/flask-redis-app:latest .
+          docker push gowdas1997/flask-redis-app:latest
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/${{ steps.vars.outputs.namespace }}/
+          kubectl rollout restart deployment/flask-app -n ${{ steps.vars.outputs.namespace }}
+          kubectl rollout restart deployment/redis -n ${{ steps.vars.outputs.namespace }}
