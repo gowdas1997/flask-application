@@ -2,14 +2,10 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [dev]
-  pull_request:
-    branches: [main]
-    types: [closed]
+    branches: [dev, main]
 
 jobs:
   build-and-deploy:
-    if: github.event_name == 'push' || (github.event.pull_request.merged == true)
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +32,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          kubectl apply -f k8s/${{ steps.vars.outputs.namespace }}/
+          kubectl apply -f k8s/${{ steps.vars.outputs.namespace }}/ -n ${{ steps.vars.outputs.namespace }}
           kubectl rollout restart deployment/flask-app -n ${{ steps.vars.outputs.namespace }}
           kubectl rollout restart deployment/redis -n ${{ steps.vars.outputs.namespace }}
+          kubectl rollout status deployment/flask-app -n ${{ steps.vars.outputs.namespace }} --timeout=120s
