@@ -37,16 +37,9 @@ jobs:
           kubectl rollout restart deployment/redis -n ${{ steps.vars.outputs.namespace }}
           kubectl rollout status deployment/flask-app -n ${{ steps.vars.outputs.namespace }} --timeout=120s
 
-      - name: Expose service via port-forward
+      - name: Restart port-forward service
         run: |
           NAMESPACE=${{ steps.vars.outputs.namespace }}
-          if [ "$NAMESPACE" == "dev" ]; then
-            PORT=8080
-          else
-            PORT=8081
-          fi
-          pkill -f "port-forward.*$NAMESPACE.*$PORT:80" || true
-          sleep 2
-          setsid nohup kubectl port-forward --address 0.0.0.0 svc/flask-app-service -n $NAMESPACE $PORT:80 > /tmp/portforward-$NAMESPACE.log 2>&1 < /dev/null &
+          sudo systemctl restart portforward-$NAMESPACE
           sleep 3
-          echo "Port-forward started for $NAMESPACE on port $PORT"
+          sudo systemctl status portforward-$NAMESPACE --no-pager
