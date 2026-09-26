@@ -20,6 +20,7 @@ QUOTES = [
     "Automated deployments = happy engineer.",
     "One push, zero manual steps.",
     "CI/CD: because manual deploys are for weekends off.",
+    "Automated pipelines never call in sick.",
 ]
 
 @app.route("/")
