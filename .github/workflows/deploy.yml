@@ -36,3 +36,10 @@ jobs:
           kubectl rollout restart deployment/flask-app -n ${{ steps.vars.outputs.namespace }}
           kubectl rollout restart deployment/redis -n ${{ steps.vars.outputs.namespace }}
           kubectl rollout status deployment/flask-app -n ${{ steps.vars.outputs.namespace }} --timeout=120s
+
+      - name: Restart port-forward service
+        run: |
+          NAMESPACE=${{ steps.vars.outputs.namespace }}
+          sudo systemctl restart portforward-$NAMESPACE
+          sleep 3
+          sudo systemctl status portforward-$NAMESPACE --no-pager
